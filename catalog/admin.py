@@ -1,7 +1,7 @@
 from django.contrib import admin
-from catalog.models import (Category, Product, Discount, Seller, Order, Cashback, Promocode, ProductImage)
+from catalog.models import (Cart, OrderProducts, Order, Promocode, Product_img, Product, Comment, Category,
+                            Comment_image, Discount, Seller, CashBack)
 
-# Register your models here.
 
 class ProductAdmin(admin.ModelAdmin):
     list_display = ('article', 'name', 'price')
@@ -9,10 +9,14 @@ class ProductAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Product, ProductAdmin)
+admin.site.register(Cart)
+admin.site.register(OrderProducts)
+admin.site.register(Order)
+admin.site.register(Promocode)
+admin.site.register(Product_img)
+admin.site.register(Comment_image)
+admin.site.register(Comment)
 admin.site.register(Category)
 admin.site.register(Discount)
 admin.site.register(Seller)
-admin.site.register(Cashback)
-admin.site.register(Order)
-admin.site.register(ProductImage)
-admin.site.register(Promocode)
+admin.site.register(CashBack)

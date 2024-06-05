@@ -2,132 +2,148 @@ from django.db import models
 from users.models import CustomUser
 
 
-# Create your models here.
-
 class Category(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
     description = models.TextField()
 
     class Meta:
-        verbose_name_plural = "Categories"
+        verbose_name_plural = 'Categories'
 
     def __str__(self):
-        return self.name
+        return f'{self.name}'
 
 
 class Seller(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
     description = models.TextField()
-    contact = models.CharField(max_length=500)
+    contact = models.CharField(max_length=20)
 
     def __str__(self):
-        return self.name
+        return f'{self.name}'
 
 
 class Discount(models.Model):
-    name = models.CharField(max_length=100)
+    name = models.CharField(max_length=255)
     percent = models.PositiveIntegerField()
-    date_start = models.DateField()
-    date_end = models.DateField()
+    exp_date = models.DateField()
 
     def __str__(self):
-        return f'{self.name}, {self.percent}'
-
-
-class Promocode(models.Model):
-    name = models.CharField(max_length=100)
-    percent = models.PositiveIntegerField()
-    date_start = models.DateField()
-    date_end = models.DateField()
-    is_active = models.BooleanField()
-
-    def __str__(self):
-        return f'{self.name}, {self.percent}'
+        return f'{self.name}'
 
 
 class Product(models.Model):
-    name = models.CharField(max_length=100)
-    article = models.CharField(max_length=100)
-    description = models.TextField()
-    count_on_stock = models.PositiveIntegerField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
-
-    discount = models.ForeignKey(Discount, null=True, blank=True, on_delete=models.SET_NULL)
-    category = models.ForeignKey(Category, null=True, blank=True, on_delete=models.SET_NULL)
-    seller = models.ForeignKey(Seller, null=True, blank=True, on_delete=models.CASCADE)
+    name = models.CharField(max_length=255)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+    description = models.TextField()
+    seller = models.ForeignKey(Seller, on_delete=models.CASCADE)
+    count_on_stock = models.PositiveBigIntegerField()
+    article = models.CharField(max_length=255)
+    discount = models.ForeignKey(Discount, on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return f'{self.name}, {self.article}'
 
 
-class ProductImage(models.Model):
+class Cart(models.Model):
+    prod_id = models.ForeignKey(Product, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    count = models.PositiveBigIntegerField(blank=True, null=True)
+
+
+class Promocode(models.Model):
+    name = models.CharField(max_length=255)
+    percent = models.PositiveIntegerField
+    is_cimilative = models.BooleanField(default=False)
+    date_start = models.DateField()
+    date_end = models.DateField()
+
+    def __str__(self):
+        return self.name
+
+
+class CashBack(models.Model):
+    percent = models.PositiveBigIntegerField()
+    threshold = models.PositiveBigIntegerField()
+
+
+class Product_img(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     image = models.ImageField(upload_to='product_images/')
 
     def __str__(self):
-        return f'Image for {self.product.name}'
-
-
-class Cart(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
-    products = models.ForeignKey(Product, on_delete=models.CASCADE)
-    count = models.PositiveIntegerField()
+        return f'image for product: {self.product}'
 
 
 class Order(models.Model):
-    STATUS = (
-        ('in Process', 'In Process'),
-        ('Packed', 'Packed'),
-        ('On the way', 'On the way'),
-        ('Delivered', 'Delivered'),
-        ('Received', 'Received'),
-        ('Refused', 'Refused')
+
+    status_order_choices = (
+        ('in processing', 'in processing'),
+        ('accepted by the store', 'accepted by the store'),
+        ('sent', 'sent'),
+        ('delivered', 'delivered'),
+        ('on the way', 'on the way'),
+        ('on stock', 'on stock'),
+        ('received', 'received'),
     )
-    DELIVERY_METHODS = (
-        ('Courier', 'Courier'),
-        ('Post', 'Post'),
-        ('Self-delivery', 'Self delivery')
+
+    delivery_method_choice = (
+        ('to the point of issue', 'to the point of issue'),
+        ('courier', 'courier'),
     )
-    PAYMENT_METHOD = (
-        ('Card Online', 'Card Online'),
-        ('Card Offline', 'Card Offline'),
-        ('Cash', 'Cash')
+
+    payment_status_choice = (
+        ('paid', 'paid'),
+        ('not paid', 'not paid'),
+        ('cancelled', 'cancelled'),
     )
-    PAYMENT_STATUSES = (
-        ('Paid', 'Paid'),
-        ('In process', 'In process'),
-        ('Cancelled', 'Cancelled')
+
+    payment_method_choice = (
+        ('by card', 'by card'),
+        ('in cash', 'in cash'),
     )
-    NOTIF_TIMES = (
-        (24, 24),
-        (6, 6),
-        (1, 1)
+
+    is_notif_required = (
+        ('within in 1 hour', 'within in 1 hour'),
+        ('within in 6 hour', 'within in 3 hour'),
+        ('within in 24 hour', 'within in 24 hour'),
+        ('without', 'without')
     )
+
     user = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
     total_sum = models.DecimalField(max_digits=10, decimal_places=2)
-    status = models.CharField(choices=STATUS, max_length=100)
-
-    delivery_address = models.CharField(max_length=250, null=True, blank=True)
-    delivery_methods = models.CharField(choices=DELIVERY_METHODS, max_length=100)
-
-    payment_method = models.CharField(choices=PAYMENT_METHOD, max_length=100)
-    payment_status = models.CharField(choices=PAYMENT_STATUSES, max_length=100, default='In process')
-    delivery_notification_before = models.PositiveIntegerField(choices=NOTIF_TIMES, default=6)
+    status = models.CharField(max_length=255, choices=status_order_choices, blank=False)
+    delivery_method = models.CharField(max_length=255, choices=delivery_method_choice, blank=False)
+    datetime = models.DateTimeField(auto_now_add=True)
+    delivery_date = models.DateTimeField()
+    payment_status = models.CharField(max_length=255, choices=payment_status_choice, blank=False, default='not paid')
+    payment_method = models.CharField(max_length=255, choices=payment_method_choice, blank=False)
+    delivery_address = models.CharField(max_length=255)
+    is_notif_required = models.CharField(max_length=255, choices=is_notif_required, blank=False,
+                                         default='within in 1 hour')
 
     def __str__(self):
-        return f'{self.pk} - {self.user.email}'
+        return f'number of order:{self.id}, user: {self.id}'
 
 
 class OrderProducts(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    count = models.PositiveIntegerField()
+    count = models.IntegerField(null=True, blank=True)
 
 
-class Cashback(models.Model):
-    percent = models.PositiveIntegerField()
-    treshold = models.PositiveIntegerField()
+class Comment(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    text = models.TextField()
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
 
     def __str__(self):
-        return str(self.percent)
+        return f'user: {self.user}, product: {self.product}'
+
+
+class Comment_image(models.Model):
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE)
+    image = models.ImageField(upload_to='comment_images/')
+
+    def __str__(self):
+        return f'image for {self.comment}'
