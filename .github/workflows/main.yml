@@ -40,7 +40,7 @@ jobs:
 
       - name: Lint with Prospector
         run: |
-          prospector || True
+          .prospector || True
 
       - name: Run Tests
         run: |
